@@ -64,10 +64,10 @@ export class UserService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error("Invalid credentials");
 
-    const accessToken = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+    const accessToken = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
       expiresIn: "1h",
     });
-    const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+    const refreshToken = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "7d",
     });
     await this.repository.updateRefreshToken(user.id, refreshToken);
@@ -75,23 +75,44 @@ export class UserService {
     return { accessToken, refreshToken };
   }
 
-  async refreshToken(refreshToken: string) {
-    try {
-      const decoded: any = jwt.verify(refreshToken, JWT_SECRET);
-      const user = await this.repository.findByEmail(decoded.id);
-      if (!user || user.refreshToken !== refreshToken)
-        throw new Error("Invalid token");
+  // async refreshToken(refreshToken: string) {
+  //   try {
+  //     const decoded: any = jwt.verify(refreshToken, JWT_SECRET);
+  //     const user = await this.repository.findById(decoded.userId);
+  //     if (!user || user.refreshToken !== refreshToken)
+  //       throw new Error("Invalid token");
 
-      const accessToken = jwt.sign(
-        { id: user.id, role: user.role },
-        JWT_SECRET,
-        { expiresIn: "1h" }
-      );
-      return { accessToken };
-    } catch {
+  //     const accessToken = jwt.sign(
+  //       { id: user.id, role: user.role },
+  //       JWT_SECRET,
+  //       { expiresIn: "1h" }
+  //     );
+  //     return { accessToken };
+  //   } catch {
+  //     throw new Error("Invalid refresh token");
+  //   }
+  // }
+async refreshToken(refreshToken: string) {
+  try {
+    const decoded = jwt.verify(refreshToken, JWT_SECRET) as { userId: string };
+
+    const user = await this.repository.findById(decoded.userId);
+    if (!user || user.refreshToken !== refreshToken) {
       throw new Error("Invalid refresh token");
     }
+
+    const accessToken = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    return { accessToken };
+  } catch (err) {
+    throw new Error("Invalid refresh token");
   }
+}
+
 
   async forgotPassword(email: string) {
     userSchema.pick({ email: true }).parse({ email });
