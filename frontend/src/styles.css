@@ -1,0 +1,7 @@
+body { font-family: Arial, sans-serif; background:#f7f8fb; margin:0 }
+.app { max-width:820px; margin:24px auto; padding:12px }
+.nav { display:flex; gap:12px; margin-bottom:16px }
+.card { background:white; padding:16px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06) }
+input, select { display:block; width:100%; margin:8px 0; padding:8px }
+button { padding:8px 12px }
+.error { color:red }
